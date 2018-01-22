@@ -1,5 +1,10 @@
 package main
 
+import (
+	"os/exec"
+	"syscall"
+)
+
 type Site struct {
 	name string
 	urls []string
@@ -18,4 +23,16 @@ func (r *SiteCheckResult) errors() []error {
 		}
 	}
 	return errors
+}
+
+func (r *SiteCheckResult) status() int {
+	totalStatus := 0
+	for _, res := range r.urlResults {
+		if exit, ok := res.err.(*exec.ExitError); ok {
+			if status, ok := exit.Sys().(syscall.WaitStatus); ok && status.ExitStatus() > totalStatus {
+				totalStatus = status.ExitStatus()
+			}
+		}
+	}
+	return totalStatus
 }
