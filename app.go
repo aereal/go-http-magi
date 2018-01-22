@@ -5,12 +5,14 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"runtime"
 	"strings"
 	"sync"
 )
 
 type App struct {
-	site *Site
+	site           *Site
+	maxConcurrency int
 }
 
 type URLList []string
@@ -46,6 +48,8 @@ func newApp(args []string, outStream, errorStream io.Writer) (*App, error) {
 	}
 
 	app := new(App)
+	app.maxConcurrency = runtime.NumCPU()
+	runtime.GOMAXPROCS(app.maxConcurrency)
 	app.site = &Site{
 		name: siteName,
 		urls: urls,
@@ -54,26 +58,37 @@ func newApp(args []string, outStream, errorStream io.Writer) (*App, error) {
 }
 
 func (a *App) checkURLs() *sync.Map {
+	semaphore := make(chan int, a.maxConcurrency)
+	var wg sync.WaitGroup
 	checkResults := new(sync.Map)
 	for _, url := range a.site.urls {
-		out := new(bytes.Buffer)
-		errOut := new(bytes.Buffer)
-		if err := runCheckHTTP(url, out, errOut); err != nil {
-			res := &URLCheckResult{
-				outStream:   out,
-				errorStream: errOut,
-				err:         err,
+		wg.Add(1)
+		go func(url string) {
+			defer wg.Done()
+			semaphore <- 1
+
+			out := new(bytes.Buffer)
+			errOut := new(bytes.Buffer)
+			if err := runCheckHTTP(url, out, errOut); err != nil {
+				res := &URLCheckResult{
+					outStream:   out,
+					errorStream: errOut,
+					err:         err,
+				}
+				checkResults.Store(url, res)
+			} else {
+				res := &URLCheckResult{
+					outStream:   out,
+					errorStream: errOut,
+					err:         nil,
+				}
+				checkResults.Store(url, res)
 			}
-			checkResults.Store(url, res)
-		} else {
-			res := &URLCheckResult{
-				outStream:   out,
-				errorStream: errOut,
-				err:         nil,
-			}
-			checkResults.Store(url, res)
-		}
+
+			<-semaphore
+		}(url)
 	}
+	wg.Wait()
 	return checkResults
 }
 
