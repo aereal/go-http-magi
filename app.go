@@ -10,10 +10,35 @@ import (
 	"sync"
 )
 
+type AccumulationOp int
+
+const (
+	OP_OR AccumulationOp = iota
+	OP_AND
+)
+
+func (f *AccumulationOp) String() string {
+	return string(*f)
+}
+
+func (f *AccumulationOp) Set(value string) error {
+	switch value {
+	case "or":
+		*f = OP_OR
+		return nil
+	case "and":
+		*f = OP_AND
+		return nil
+	default:
+		return fmt.Errorf("Unknown value: %s", value)
+	}
+}
+
 // App represents execution context of CLI application.
 type App struct {
 	site           *Site
 	maxConcurrency int
+	accumulationOp AccumulationOp
 }
 
 type urlList []string
@@ -31,10 +56,12 @@ func newApp(args []string, outStream, errorStream io.Writer) (*App, error) {
 	var (
 		siteName string
 		urls     urlList
+		op       AccumulationOp
 	)
 	flgs := flag.NewFlagSet("magi", flag.ContinueOnError)
 	flgs.StringVar(&siteName, "name", "", "site name")
 	flgs.Var(&urls, "url", "URLs")
+	flgs.Var(&op, "op", "operation")
 	flgs.SetOutput(errorStream)
 	if err := flgs.Parse(args[1:]); err != nil {
 		return nil, err
@@ -50,6 +77,7 @@ func newApp(args []string, outStream, errorStream io.Writer) (*App, error) {
 
 	app := new(App)
 	app.maxConcurrency = runtime.NumCPU()
+	app.accumulationOp = op
 	runtime.GOMAXPROCS(app.maxConcurrency)
 	app.site = &Site{
 		name: siteName,
