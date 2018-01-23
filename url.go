@@ -1,16 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"io"
-	"os/exec"
+
+	"github.com/mackerelio/checkers"
+	checkhttp "github.com/mackerelio/go-check-plugins/check-http/lib"
 )
 
-func runCheckHTTP(url string, outStream, errorStream io.Writer) error {
-	cmd := exec.Command("check-http", "--url", url)
-	cmd.Stdout = outStream
-	cmd.Stderr = errorStream
-	err := cmd.Run()
-	return err
+func runCheckHTTP(url string, outStream, errorStream io.Writer) (checkers.Status, error) {
+	chkr := checkhttp.Run([]string{"-u", url})
+	chkr.Name = "HTTP"
+	if chkr.Status == checkers.OK {
+		return chkr.Status, nil
+	}
+	return chkr.Status, fmt.Errorf(chkr.String())
 }
 
 // URLCheckResult represents a result of external monitoring.
@@ -18,6 +22,7 @@ type URLCheckResult struct {
 	outStream   io.Writer
 	errorStream io.Writer
 	err         error
+	status      checkers.Status
 }
 
 func (r *URLCheckResult) ok() bool {

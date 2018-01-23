@@ -1,10 +1,5 @@
 package main
 
-import (
-	"os/exec"
-	"syscall"
-)
-
 // Site represents a set of URLs
 type Site struct {
 	name string
@@ -30,10 +25,9 @@ func (r *SiteCheckResult) errors() []error {
 func (r *SiteCheckResult) status() int {
 	totalStatus := 0
 	for _, res := range r.urlResults {
-		if exit, ok := res.err.(*exec.ExitError); ok {
-			if status, ok := exit.Sys().(syscall.WaitStatus); ok && status.ExitStatus() > totalStatus {
-				totalStatus = status.ExitStatus()
-			}
+		statusInt := int(res.status)
+		if statusInt > totalStatus {
+			totalStatus = statusInt
 		}
 	}
 	return totalStatus
