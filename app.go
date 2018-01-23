@@ -10,18 +10,19 @@ import (
 	"sync"
 )
 
+// App represents execution context of CLI application.
 type App struct {
 	site           *Site
 	maxConcurrency int
 }
 
-type URLList []string
+type urlList []string
 
-func (f *URLList) String() string {
+func (f *urlList) String() string {
 	return strings.Join(*f, " ")
 }
 
-func (f *URLList) Set(value string) error {
+func (f *urlList) Set(value string) error {
 	*f = append(*f, value)
 	return nil
 }
@@ -29,7 +30,7 @@ func (f *URLList) Set(value string) error {
 func newApp(args []string, outStream, errorStream io.Writer) (*App, error) {
 	var (
 		siteName string
-		urls     URLList
+		urls     urlList
 	)
 	flgs := flag.NewFlagSet("magi", flag.ContinueOnError)
 	flgs.StringVar(&siteName, "name", "", "site name")
@@ -110,7 +111,7 @@ func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 			return true
 		}
 		result.urlResults[url] = urlResult
-		if !urlResult.OK() {
+		if !urlResult.ok() {
 			result.ok = false
 		}
 		return true
