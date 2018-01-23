@@ -13,12 +13,13 @@ func runCheckHTTP(url string, outStream, errorStream io.Writer) error {
 	return err
 }
 
+// URLCheckResult represents a result of external monitoring.
 type URLCheckResult struct {
 	outStream   io.Writer
 	errorStream io.Writer
 	err         error
 }
 
-func (r *URLCheckResult) OK() bool {
+func (r *URLCheckResult) ok() bool {
 	return r.err == nil
 }

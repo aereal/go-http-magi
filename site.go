@@ -5,11 +5,13 @@ import (
 	"syscall"
 )
 
+// Site represents a set of URLs
 type Site struct {
 	name string
 	urls []string
 }
 
+// SiteCheckResult represents a check result of the site.
 type SiteCheckResult struct {
 	ok         bool
 	urlResults map[string]*URLCheckResult
@@ -18,7 +20,7 @@ type SiteCheckResult struct {
 func (r *SiteCheckResult) errors() []error {
 	var errors []error
 	for _, res := range r.urlResults {
-		if !res.OK() {
+		if !res.ok() {
 			errors = append(errors, res.err)
 		}
 	}

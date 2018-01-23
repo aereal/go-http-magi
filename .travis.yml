@@ -1,0 +1,10 @@
+---
+
+sudo: false
+language: go
+install:
+  - go get github.com/golang/lint/golint
+  - go get -d -t ./...
+script:
+  - go test -v --cover --short ./...
+  - golint -set_exit_status ./...
