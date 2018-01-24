@@ -8,12 +8,42 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/mackerelio/checkers"
 )
+
+// AccumulationOp determines how URL results accumulated.
+// OP_OR means site result should be successful if any URL check succeeds.
+type AccumulationOp int
+
+const (
+	opOr AccumulationOp = iota
+	opAnd
+)
+
+func (f *AccumulationOp) String() string {
+	return string(*f)
+}
+
+// Set sets value
+func (f *AccumulationOp) Set(value string) error {
+	switch value {
+	case "or":
+		*f = opOr
+		return nil
+	case "and":
+		*f = opAnd
+		return nil
+	default:
+		return fmt.Errorf("Unknown value: %s", value)
+	}
+}
 
 // App represents execution context of CLI application.
 type App struct {
 	site           *Site
 	maxConcurrency int
+	accumulationOp AccumulationOp
 }
 
 type urlList []string
@@ -31,10 +61,12 @@ func newApp(args []string, outStream, errorStream io.Writer) (*App, error) {
 	var (
 		siteName string
 		urls     urlList
+		op       AccumulationOp
 	)
 	flgs := flag.NewFlagSet("magi", flag.ContinueOnError)
 	flgs.StringVar(&siteName, "name", "", "site name")
 	flgs.Var(&urls, "url", "URLs")
+	flgs.Var(&op, "op", "operation")
 	flgs.SetOutput(errorStream)
 	if err := flgs.Parse(args[1:]); err != nil {
 		return nil, err
@@ -50,6 +82,7 @@ func newApp(args []string, outStream, errorStream io.Writer) (*App, error) {
 
 	app := new(App)
 	app.maxConcurrency = runtime.NumCPU()
+	app.accumulationOp = op
 	runtime.GOMAXPROCS(app.maxConcurrency)
 	app.site = &Site{
 		name: siteName,
@@ -97,24 +130,34 @@ func (a *App) checkURLs() *sync.Map {
 
 func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 	result := &SiteCheckResult{
-		ok:         true,
 		urlResults: make(map[string]*URLCheckResult),
+		statusCode: 0,
 	}
 	results.Range(func(key interface{}, value interface{}) bool {
 		var (
-			ok        bool
 			url       string
 			urlResult *URLCheckResult
 		)
-		if url, ok = key.(string); !ok {
+		if k, casted := key.(string); casted {
+			url = k
+		} else {
 			return true
 		}
-		if urlResult, ok = value.(*URLCheckResult); !ok {
+		if res, casted := value.(*URLCheckResult); casted {
+			urlResult = res
+		} else {
 			return true
 		}
 		result.urlResults[url] = urlResult
-		if !urlResult.ok() {
-			result.ok = false
+		switch a.accumulationOp {
+		case opAnd:
+			if result.statusCode < int(urlResult.status) {
+				result.statusCode = int(urlResult.status)
+			}
+		case opOr:
+			if urlResult.status == checkers.OK {
+				result.statusCode = int(checkers.OK)
+			}
 		}
 		return true
 	})
