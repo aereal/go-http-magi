@@ -17,11 +17,11 @@
   branch = "master"
   name = "github.com/mackerelio/go-check-plugins"
   packages = ["check-http/lib"]
-  revision = "86e110830cbaf079fdc3c12f0400ed615d831947"
+  revision = "ed86c82926bde3a23436addf3512bf92e7ce075e"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "64379fb68e1ed18333c8ac9b1f58f991f7bebb20e0e45b3eb34e255e49ce048a"
+  inputs-digest = "c0e82a7aaa75124f3b617d6431fe7f691e78fcca5776f4df7278fae9e6f58828"
   solver-name = "gps-cdcl"
   solver-version = 1
