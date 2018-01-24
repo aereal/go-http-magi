@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/mackerelio/checkers"
 )
 
 // App represents execution context of CLI application.
@@ -120,9 +122,18 @@ func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 			return true
 		}
 		result.urlResults[url] = urlResult
-		if result.statusCode < int(urlResult.status) {
-			result.statusCode = int(urlResult.status)
+
+		switch a.operation {
+		case opAnd:
+			if result.statusCode < int(urlResult.status) {
+				result.statusCode = int(urlResult.status)
+			}
+		case opOr:
+			if urlResult.status == checkers.OK {
+				result.statusCode = int(checkers.OK)
+			}
 		}
+
 		return true
 	})
 	return result
