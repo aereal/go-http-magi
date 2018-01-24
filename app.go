@@ -128,6 +128,10 @@ func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 			if result.statusCode < int(urlResult.status) {
 				result.statusCode = int(urlResult.status)
 			}
+		case opNand:
+			if urlResult.status == checkers.OK {
+				result.statusCode = int(checkers.CRITICAL)
+			}
 		case opOr:
 			if urlResult.status == checkers.OK {
 				result.statusCode = int(checkers.OK)

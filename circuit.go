@@ -24,9 +24,11 @@ func (f *Operation) Set(value string) error {
 const (
 	opAnd Operation = iota
 	opOr
+	opNand
 )
 
 var name2op = map[string]Operation{
-	"and": opAnd,
-	"or":  opOr,
+	"and":  opAnd,
+	"or":   opOr,
+	"nand": opNand,
 }
