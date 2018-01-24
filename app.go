@@ -102,14 +102,17 @@ func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 	}
 	results.Range(func(key interface{}, value interface{}) bool {
 		var (
-			ok        bool
 			url       string
 			urlResult *URLCheckResult
 		)
-		if url, ok = key.(string); !ok {
+		if k, casted := key.(string); casted {
+			url = k
+		} else {
 			return true
 		}
-		if urlResult, ok = value.(*URLCheckResult); !ok {
+		if res, casted := value.(*URLCheckResult); casted {
+			urlResult = res
+		} else {
 			return true
 		}
 		result.urlResults[url] = urlResult
