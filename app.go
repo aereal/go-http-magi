@@ -97,24 +97,27 @@ func (a *App) checkURLs() *sync.Map {
 
 func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 	result := &SiteCheckResult{
-		ok:         true,
 		urlResults: make(map[string]*URLCheckResult),
+		statusCode: 0,
 	}
 	results.Range(func(key interface{}, value interface{}) bool {
 		var (
-			ok        bool
 			url       string
 			urlResult *URLCheckResult
 		)
-		if url, ok = key.(string); !ok {
+		if k, casted := key.(string); casted {
+			url = k
+		} else {
 			return true
 		}
-		if urlResult, ok = value.(*URLCheckResult); !ok {
+		if res, casted := value.(*URLCheckResult); casted {
+			urlResult = res
+		} else {
 			return true
 		}
 		result.urlResults[url] = urlResult
-		if !urlResult.ok() {
-			result.ok = false
+		if result.statusCode < int(urlResult.status) {
+			result.statusCode = int(urlResult.status)
 		}
 		return true
 	})

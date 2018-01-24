@@ -1,5 +1,9 @@
 package main
 
+import (
+	"github.com/mackerelio/checkers"
+)
+
 // Site represents a set of URLs
 type Site struct {
 	name string
@@ -8,8 +12,8 @@ type Site struct {
 
 // SiteCheckResult represents a check result of the site.
 type SiteCheckResult struct {
-	ok         bool
 	urlResults map[string]*URLCheckResult
+	statusCode int
 }
 
 func (r *SiteCheckResult) errors() []error {
@@ -22,13 +26,6 @@ func (r *SiteCheckResult) errors() []error {
 	return errors
 }
 
-func (r *SiteCheckResult) status() int {
-	totalStatus := 0
-	for _, res := range r.urlResults {
-		statusInt := int(res.status)
-		if statusInt > totalStatus {
-			totalStatus = statusInt
-		}
-	}
-	return totalStatus
+func (r *SiteCheckResult) ok() bool {
+	return r.statusCode == int(checkers.OK)
 }
