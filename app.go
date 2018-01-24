@@ -14,6 +14,7 @@ import (
 type App struct {
 	site           *Site
 	maxConcurrency int
+	operation      Operation
 }
 
 type urlList []string
@@ -31,10 +32,12 @@ func newApp(args []string, outStream, errorStream io.Writer) (*App, error) {
 	var (
 		siteName string
 		urls     urlList
+		op       Operation
 	)
 	flgs := flag.NewFlagSet("magi", flag.ContinueOnError)
 	flgs.StringVar(&siteName, "name", "", "site name")
 	flgs.Var(&urls, "url", "URLs")
+	flgs.Var(&op, "op", "operation")
 	flgs.SetOutput(errorStream)
 	if err := flgs.Parse(args[1:]); err != nil {
 		return nil, err
@@ -50,6 +53,7 @@ func newApp(args []string, outStream, errorStream io.Writer) (*App, error) {
 
 	app := new(App)
 	app.maxConcurrency = runtime.NumCPU()
+	app.operation = op
 	runtime.GOMAXPROCS(app.maxConcurrency)
 	app.site = &Site{
 		name: siteName,
