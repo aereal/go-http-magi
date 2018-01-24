@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/mackerelio/checkers"
 )
 
 type AccumulationOp int
@@ -144,8 +146,15 @@ func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 			return true
 		}
 		result.urlResults[url] = urlResult
-		if result.statusCode < int(urlResult.status) {
-			result.statusCode = int(urlResult.status)
+		switch a.accumulationOp {
+		case OP_AND:
+			if result.statusCode < int(urlResult.status) {
+				result.statusCode = int(urlResult.status)
+			}
+		case OP_OR:
+			if urlResult.status == checkers.OK {
+				result.statusCode = int(checkers.OK)
+			}
 		}
 		return true
 	})
