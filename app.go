@@ -12,24 +12,27 @@ import (
 	"github.com/mackerelio/checkers"
 )
 
+// AccumulationOp determines how URL results accumulated.
+// OP_OR means site result should be successful if any URL check succeeds.
 type AccumulationOp int
 
 const (
-	OP_OR AccumulationOp = iota
-	OP_AND
+	opOr AccumulationOp = iota
+	opAnd
 )
 
 func (f *AccumulationOp) String() string {
 	return string(*f)
 }
 
+// Set sets value
 func (f *AccumulationOp) Set(value string) error {
 	switch value {
 	case "or":
-		*f = OP_OR
+		*f = opOr
 		return nil
 	case "and":
-		*f = OP_AND
+		*f = opAnd
 		return nil
 	default:
 		return fmt.Errorf("Unknown value: %s", value)
@@ -147,11 +150,11 @@ func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 		}
 		result.urlResults[url] = urlResult
 		switch a.accumulationOp {
-		case OP_AND:
+		case opAnd:
 			if result.statusCode < int(urlResult.status) {
 				result.statusCode = int(urlResult.status)
 			}
-		case OP_OR:
+		case opOr:
 			if urlResult.status == checkers.OK {
 				result.statusCode = int(checkers.OK)
 			}
