@@ -97,8 +97,8 @@ func (a *App) checkURLs() *sync.Map {
 
 func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 	result := &SiteCheckResult{
-		ok:         true,
 		urlResults: make(map[string]*URLCheckResult),
+		statusCode: 0,
 	}
 	results.Range(func(key interface{}, value interface{}) bool {
 		var (
@@ -116,8 +116,8 @@ func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 			return true
 		}
 		result.urlResults[url] = urlResult
-		if !urlResult.ok() {
-			result.ok = false
+		if result.statusCode < int(urlResult.status) {
+			result.statusCode = int(urlResult.status)
 		}
 		return true
 	})
