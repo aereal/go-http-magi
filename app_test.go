@@ -23,11 +23,9 @@ func TestNewApp_Valid(t *testing.T) {
 		newAppSuccessTestCase{
 			args: strings.Split("magi -config ./testdata/valid.json", " "),
 			expectedSiteConfig: &Site{
-				Name: "aereal.org",
-				URLs: []string{
-					"https://aereal.org/",
-					"https://aereal.org/subdir/",
-				},
+				Name:         "aereal.org",
+				PrimaryURL:   "https://aereal.org/subdir/",
+				SecondaryURL: "https://aereal.org/",
 			},
 		},
 	}
@@ -56,7 +54,7 @@ func TestNewApp_Invalid(t *testing.T) {
 		newAppFailureTestCase{
 			args:                 strings.Split("magi -config testdata/invalid.json", " "),
 			message:              "app should require urls but got %#v",
-			expectedErrorMessage: "urls required",
+			expectedErrorMessage: "primary_url required",
 		},
 	}
 
@@ -76,14 +74,11 @@ func eqSite(expected *Site, actual *Site) error {
 	if expected.Name != actual.Name {
 		return fmt.Errorf("expected name: %s; actual: %s", expected.Name, actual.Name)
 	}
-	if len(expected.URLs) != len(actual.URLs) {
-		return fmt.Errorf("expected # of URLs: %d; actual: %d", len(expected.URLs), len(actual.URLs))
+	if expected.PrimaryURL != actual.PrimaryURL {
+		return fmt.Errorf("expected PrimaryURL: %s; actual: %s", expected.PrimaryURL, actual.PrimaryURL)
 	}
-	for i, expectedURL := range expected.URLs {
-		actualURL := actual.URLs[i]
-		if expectedURL != actualURL {
-			return fmt.Errorf("expected urls[%d]: %s; actual: %s", i, expectedURL, actualURL)
-		}
+	if expected.SecondaryURL != actual.SecondaryURL {
+		return fmt.Errorf("expected SecondaryURL: %s; actual: %s", expected.SecondaryURL, actual.SecondaryURL)
 	}
 	return nil
 }

@@ -50,7 +50,8 @@ func (a *App) checkURLs() *sync.Map {
 	semaphore := make(chan int, a.maxConcurrency)
 	var wg sync.WaitGroup
 	checkResults := new(sync.Map)
-	for _, url := range a.site.URLs {
+	urls := []string{a.site.PrimaryURL, a.site.SecondaryURL}
+	for _, url := range urls {
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()
@@ -137,8 +138,11 @@ func validateSiteConfig(site *Site) error {
 	if site.Name == "" {
 		return fmt.Errorf("name required")
 	}
-	if len(site.URLs) == 0 {
-		return fmt.Errorf("urls required")
+	if site.PrimaryURL == "" {
+		return fmt.Errorf("primary_url required")
+	}
+	if site.SecondaryURL == "" {
+		return fmt.Errorf("secondary_url required")
 	}
 	return nil
 }
