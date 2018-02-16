@@ -1,7 +1,5 @@
 {
   "name": "aereal.org",
-  "urls": [
-    "https://aereal.org/",
-    "https://aereal.org/subdir/"
-  ]
+  "primary_url": "https://aereal.org/subdir/",
+  "secondary_url": "https://aereal.org/"
 }
