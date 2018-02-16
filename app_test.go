@@ -6,21 +6,39 @@ import (
 	"testing"
 )
 
-func TestNewApp(t *testing.T) {
-	var err error
+type newAppFailureTestCase struct {
+	args                 []string
+	message              string
+	expectedErrorMessage string
+}
 
-	_, err = newApp(strings.Split("magi -unknown", " "), new(bytes.Buffer), new(bytes.Buffer))
-	if err == nil {
-		t.Errorf("app should reject unknown parameter but got %#v", err)
+func TestNewApp_Invalid(t *testing.T) {
+	cases := []newAppFailureTestCase{
+		newAppFailureTestCase{
+			args:                 strings.Split("magi -unknown", " "),
+			message:              "app should reject unknown parameter but got %#v",
+			expectedErrorMessage: "flag provided but not defined: -unknown",
+		},
+		newAppFailureTestCase{
+			args:                 strings.Split("magi", " "),
+			message:              "app should require name parameter; error: %#v",
+			expectedErrorMessage: "name required",
+		},
+		newAppFailureTestCase{
+			args:                 strings.Split("magi -name aereal.org", " "),
+			message:              "app should require url parameter but got %#v",
+			expectedErrorMessage: "URLs required",
+		},
 	}
 
-	_, err = newApp(strings.Split("magi", " "), new(bytes.Buffer), new(bytes.Buffer))
-	if err == nil || err.Error() != "name required" {
-		t.Errorf("app should require name parameter; error: %#v", err)
-	}
-
-	_, err = newApp(strings.Split("magi -name aereal.org", " "), new(bytes.Buffer), new(bytes.Buffer))
-	if err == nil || err.Error() != "URLs required" {
-		t.Errorf("app should require url parameter but got %#v", err)
+	for _, testCase := range cases {
+		_, err := newApp(testCase.args, new(bytes.Buffer), new(bytes.Buffer))
+		if err == nil {
+			t.Errorf("newApp(%v) should return some error but nothing got", testCase.args)
+			continue
+		}
+		if err.Error() != testCase.expectedErrorMessage {
+			t.Errorf(testCase.message, err)
+		}
 	}
 }
