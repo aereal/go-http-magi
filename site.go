@@ -6,8 +6,8 @@ import (
 
 // Site represents a set of URLs
 type Site struct {
-	name string
-	urls []string
+	Name string   `json:"name"`
+	URLs []string `json:"urls"`
 }
 
 // SiteCheckResult represents a check result of the site.
