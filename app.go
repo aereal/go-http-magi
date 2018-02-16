@@ -2,11 +2,12 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"runtime"
-	"strings"
 	"sync"
 )
 
@@ -16,45 +17,32 @@ type App struct {
 	maxConcurrency int
 }
 
-type urlList []string
-
-func (f *urlList) String() string {
-	return strings.Join(*f, " ")
-}
-
-func (f *urlList) Set(value string) error {
-	*f = append(*f, value)
-	return nil
-}
-
 func newApp(args []string, outStream, errorStream io.Writer) (*App, error) {
 	var (
-		siteName string
-		urls     urlList
+		configFilePath string
 	)
 	flgs := flag.NewFlagSet("magi", flag.ContinueOnError)
-	flgs.StringVar(&siteName, "name", "", "site name")
-	flgs.Var(&urls, "url", "URLs")
+	flgs.StringVar(&configFilePath, "config", "", "config file path")
 	flgs.SetOutput(errorStream)
 	if err := flgs.Parse(args[1:]); err != nil {
 		return nil, err
 	}
 
-	if siteName == "" {
-		return nil, fmt.Errorf("name required")
+	if configFilePath == "" {
+		return nil, fmt.Errorf("config required")
 	}
-
-	if len(urls) == 0 {
-		return nil, fmt.Errorf("URLs required")
+	site, err := parseConfigFile(configFilePath)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateSiteConfig(site); err != nil {
+		return nil, err
 	}
 
 	app := new(App)
 	app.maxConcurrency = runtime.NumCPU()
 	runtime.GOMAXPROCS(app.maxConcurrency)
-	app.site = &Site{
-		name: siteName,
-		urls: urls,
-	}
+	app.site = site
 	return app, nil
 }
 
@@ -62,7 +50,7 @@ func (a *App) checkURLs() *sync.Map {
 	semaphore := make(chan int, a.maxConcurrency)
 	var wg sync.WaitGroup
 	checkResults := new(sync.Map)
-	for _, url := range a.site.urls {
+	for _, url := range a.site.URLs {
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()
@@ -128,4 +116,29 @@ func (a *App) run() *SiteCheckResult {
 	urlResults := a.checkURLs()
 	siteResult := a.accumulateResults(urlResults)
 	return siteResult
+}
+
+func parseConfigFile(configPath string) (*Site, error) {
+	var err error
+	configFile, err := os.Open(configPath)
+	if err != nil {
+		return nil, err
+	}
+	jsonIn := json.NewDecoder(configFile)
+	var site *Site
+	err = jsonIn.Decode(&site)
+	if err != nil {
+		return nil, err
+	}
+	return site, nil
+}
+
+func validateSiteConfig(site *Site) error {
+	if site.Name == "" {
+		return fmt.Errorf("name required")
+	}
+	if len(site.URLs) == 0 {
+		return fmt.Errorf("urls required")
+	}
+	return nil
 }

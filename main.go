@@ -11,6 +11,6 @@ func main() {
 		log.Fatalf("Error: %s", err)
 	}
 	res := app.run()
-	log.Printf("[%s] OK?: %v (errors: %v)", app.site.name, res.ok(), res.errors())
+	log.Printf("[%s] OK?: %v (errors: %v)", app.site.Name, res.ok(), res.errors())
 	os.Exit(res.statusCode)
 }
