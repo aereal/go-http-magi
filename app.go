@@ -9,6 +9,8 @@ import (
 	"os"
 	"runtime"
 	"sync"
+
+	"github.com/mackerelio/checkers"
 )
 
 // App represents execution context of CLI application.
@@ -83,8 +85,10 @@ func (a *App) checkURLs() *sync.Map {
 func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 	result := &SiteCheckResult{
 		urlResults: make(map[string]*URLCheckResult),
-		statusCode: 0,
+		statusCode: int(checkers.OK),
 	}
+	var primaryURLResult *URLCheckResult
+	var secondaryURLResult *URLCheckResult
 	results.Range(func(key interface{}, value interface{}) bool {
 		var (
 			url       string
@@ -101,11 +105,17 @@ func (a *App) accumulateResults(results *sync.Map) *SiteCheckResult {
 			return true
 		}
 		result.urlResults[url] = urlResult
-		if result.statusCode < int(urlResult.status) {
-			result.statusCode = int(urlResult.status)
+		switch url {
+		case a.site.PrimaryURL:
+			primaryURLResult = urlResult
+		case a.site.SecondaryURL:
+			secondaryURLResult = urlResult
 		}
 		return true
 	})
+	if (primaryURLResult.status != checkers.OK) && (secondaryURLResult.status == checkers.OK) {
+		result.statusCode = int(primaryURLResult.status)
+	}
 	return result
 }
 
