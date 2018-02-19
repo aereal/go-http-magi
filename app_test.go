@@ -44,12 +44,12 @@ func TestAccumulateResults(t *testing.T) {
 		&siteCheckResultTestCase{
 			primaryCheckStatus:   checkers.OK,
 			secondaryCheckStatus: checkers.CRITICAL,
-			expectedStatusCode:   int(checkers.CRITICAL),
+			expectedStatusCode:   int(checkers.OK),
 		},
 		&siteCheckResultTestCase{
 			primaryCheckStatus:   checkers.CRITICAL,
 			secondaryCheckStatus: checkers.CRITICAL,
-			expectedStatusCode:   int(checkers.CRITICAL),
+			expectedStatusCode:   int(checkers.OK),
 		},
 	}
 	for _, testCase := range testCases {
