@@ -19,10 +19,8 @@ func runCheckHTTP(url string, outStream, errorStream io.Writer) (checkers.Status
 
 // URLCheckResult represents a result of external monitoring.
 type URLCheckResult struct {
-	outStream   io.Writer
-	errorStream io.Writer
-	err         error
-	status      checkers.Status
+	err    error
+	status checkers.Status
 }
 
 func (r *URLCheckResult) ok() bool {

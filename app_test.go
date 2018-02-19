@@ -28,6 +28,8 @@ type siteCheckResultTestCase struct {
 }
 
 func TestAccumulateResults(t *testing.T) {
+	primaryURL := "https://aereal.org/subdir/"
+	secondaryURL := "https://aereal.org/"
 	testCases := []*siteCheckResultTestCase{
 		&siteCheckResultTestCase{
 			primaryCheckStatus:   checkers.OK,
@@ -54,10 +56,10 @@ func TestAccumulateResults(t *testing.T) {
 		out, errOut := new(bytes.Buffer), new(bytes.Buffer)
 		app, _ := newApp(strings.Split("magi -config ./testdata/valid.json", " "), out, errOut)
 		results := new(sync.Map)
-		results.Store("https://aereal.org/subdir/", &URLCheckResult{
+		results.Store(primaryURL, &URLCheckResult{
 			status: testCase.primaryCheckStatus,
 		})
-		results.Store("https://aereal.org/", &URLCheckResult{
+		results.Store(secondaryURL, &URLCheckResult{
 			status: testCase.secondaryCheckStatus,
 		})
 		siteCheckResult := app.accumulateResults(results)
