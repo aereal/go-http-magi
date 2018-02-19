@@ -61,18 +61,14 @@ func (a *App) checkURLs() *sync.Map {
 			errOut := new(bytes.Buffer)
 			if status, err := runCheckHTTP(url, out, errOut); err != nil {
 				res := &URLCheckResult{
-					outStream:   out,
-					errorStream: errOut,
-					err:         err,
-					status:      status,
+					err:    err,
+					status: status,
 				}
 				checkResults.Store(url, res)
 			} else {
 				res := &URLCheckResult{
-					outStream:   out,
-					errorStream: errOut,
-					err:         nil,
-					status:      status,
+					err:    nil,
+					status: status,
 				}
 				checkResults.Store(url, res)
 			}

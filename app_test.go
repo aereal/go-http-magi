@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
+
+	"github.com/mackerelio/checkers"
 )
 
 type newAppSuccessTestCase struct {
@@ -16,6 +19,60 @@ type newAppFailureTestCase struct {
 	args                 []string
 	message              string
 	expectedErrorMessage string
+}
+
+type siteCheckResultTestCase struct {
+	primaryCheckStatus   checkers.Status
+	secondaryCheckStatus checkers.Status
+	expectedStatusCode   int
+}
+
+func TestAccumulateResults(t *testing.T) {
+	primaryURL := "https://aereal.org/subdir/"
+	secondaryURL := "https://aereal.org/"
+	testCases := []*siteCheckResultTestCase{
+		&siteCheckResultTestCase{
+			primaryCheckStatus:   checkers.OK,
+			secondaryCheckStatus: checkers.OK,
+			expectedStatusCode:   int(checkers.OK),
+		},
+		&siteCheckResultTestCase{
+			primaryCheckStatus:   checkers.CRITICAL,
+			secondaryCheckStatus: checkers.OK,
+			expectedStatusCode:   int(checkers.CRITICAL),
+		},
+		&siteCheckResultTestCase{
+			primaryCheckStatus:   checkers.OK,
+			secondaryCheckStatus: checkers.CRITICAL,
+			expectedStatusCode:   int(checkers.CRITICAL),
+		},
+		&siteCheckResultTestCase{
+			primaryCheckStatus:   checkers.CRITICAL,
+			secondaryCheckStatus: checkers.CRITICAL,
+			expectedStatusCode:   int(checkers.CRITICAL),
+		},
+	}
+	for _, testCase := range testCases {
+		out, errOut := new(bytes.Buffer), new(bytes.Buffer)
+		app, _ := newApp(strings.Split("magi -config ./testdata/valid.json", " "), out, errOut)
+		results := new(sync.Map)
+		results.Store(primaryURL, &URLCheckResult{
+			status: testCase.primaryCheckStatus,
+		})
+		results.Store(secondaryURL, &URLCheckResult{
+			status: testCase.secondaryCheckStatus,
+		})
+		siteCheckResult := app.accumulateResults(results)
+		if siteCheckResult.statusCode != testCase.expectedStatusCode {
+			t.Errorf(
+				"site (primary:%v secondary:%v) check must be %#v but got %#v",
+				testCase.primaryCheckStatus,
+				testCase.secondaryCheckStatus,
+				testCase.expectedStatusCode,
+				siteCheckResult.statusCode,
+			)
+		}
+	}
 }
 
 func TestNewApp_Valid(t *testing.T) {
