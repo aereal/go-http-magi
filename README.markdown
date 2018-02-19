@@ -1,4 +1,4 @@
-# go-magi
+# go-http-magi
 
 Run [check-http][] concurrently and accumulate results without false-positive.
 
