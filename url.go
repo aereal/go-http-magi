@@ -14,7 +14,8 @@ func runCheckHTTP(url string, outStream, errorStream io.Writer) (checkers.Status
 	if chkr.Status == checkers.OK {
 		return chkr.Status, nil
 	}
-	return chkr.Status, fmt.Errorf(chkr.String())
+	err := fmt.Errorf("%s: %s on %s", chkr.Status.String(), chkr.String(), url)
+	return chkr.Status, err
 }
 
 // URLCheckResult represents a result of external monitoring.
